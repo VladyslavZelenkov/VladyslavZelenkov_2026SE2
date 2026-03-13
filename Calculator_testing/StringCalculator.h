@@ -16,6 +16,7 @@ public:
 
         std::string delimiter = ",";
         char* startPtr = buffer;
+        char* context = nullptr;
 
         if (buffer[0] == '\\' && buffer[1] == '\\') {
             char* p = buffer + 2;
@@ -23,23 +24,42 @@ public:
                 p++;
             }
             size_t length = static_cast<size_t>(p - (buffer + 2));
-            delimiter = std::string(buffer + 2, length);
-            startPtr = p;
-        } 
-        else if (!std::isdigit(static_cast<unsigned char>(buffer[0])) && buffer[0] != '-' && buffer[0] != '+') {
-            throw std::invalid_argument("Invalid input");
+            if (length > 0) {
+                delimiter = std::string(buffer + 2, length);
+                startPtr = p; 
+            }
         }
 
         int sum = 0;
         std::vector<int> negativeNumbers;
-        char* ptr = strtok_s(startPtr, delimiter.c_str(), 0);
+        bool foundAnyNumber = false;
+
+        char* ptr = strtok_s(startPtr, delimiter.c_str(), &context);
 
         while (ptr != nullptr) {
-            int num = std::atoi(ptr);
-            if (num < 0) negativeNumbers.push_back(num);
-            if (num < 1000) sum += num;
+            if (strlen(ptr) > 0) {
+                char* endPtr;
+                int num = static_cast<int>(std::strtol(ptr, &endPtr, 10));
 
-            ptr = strtok_s(nullptr, delimiter.c_str(), 0);
+                if (*endPtr != '\0') {
+                    throw std::invalid_argument("Invalid input");
+                }
+
+                foundAnyNumber = true;
+
+                if (num < 0) {
+                    negativeNumbers.push_back(num);
+                }
+                else if (num <= 1000) {
+                    sum += num;
+                }
+            }
+
+            ptr = strtok_s(nullptr, delimiter.c_str(), &context);
+        }
+
+        if (!foundAnyNumber) {
+            throw std::invalid_argument("Invalid input");
         }
 
         if (!negativeNumbers.empty()) {
@@ -49,4 +69,3 @@ public:
         return sum;
     }
 };
-#pragma once
