@@ -1,0 +1,34 @@
+name: C++ CI with MSVC
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore Calculator_testing.sln
+
+    - name: Build
+      run: msbuild Calculator_testing.sln /p:Configuration=Debug /p:Platform=x64
+
+    - name: Run Tests
+      run: |
+        $testPath = "x64\Debug\Calculator_testing.exe"
+        if (Test-Path $testPath) {
+          & $testPath
+        } else {
+          Write-Error "Test executable not found at $testPath"
+          exit 1
+        }
